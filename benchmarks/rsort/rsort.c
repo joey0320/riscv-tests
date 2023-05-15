@@ -13,6 +13,7 @@
 #include "util.h"
 #include <string.h>
 #include <limits.h>
+#include <inttypes.h>
 
 //--------------------------------------------------------------------------
 // Input/Reference Data
@@ -101,6 +102,8 @@ void sort(size_t n, type* arrIn, type* scratchIn)
 //--------------------------------------------------------------------------
 // Main
 
+type input_data_copy[DATA_SIZE];
+
 int main( int argc, char* argv[] )
 {
   static type scratch[DATA_SIZE];
@@ -112,11 +115,21 @@ int main( int argc, char* argv[] )
     return 1;
 #endif
 
+  uint64_t start_cycle, end_cycle;
+  start_cycle = rdcycle();
+
   // Do the sort
   setStats(1);
-  sort(DATA_SIZE, input_data, scratch);
+  for (int i = 0; i < 30; i++) {
+    // NOTE : technically, memcpy should be excluded from cycle count...
+    memcpy(input_data_copy, input_data, sizeof(type) * DATA_SIZE);
+    sort(DATA_SIZE, input_data_copy, scratch);
+  }
   setStats(0);
 
+  end_cycle = rdcycle();
+  printf("TOTAL_CYCLES: %" PRIu64 " start_cycle: %" PRIu64 " end_cycle: %" PRIu64 "\n", end_cycle - start_cycle, start_cycle, end_cycle);
+
   // Check the results
-  return verify( DATA_SIZE, input_data, verify_data );
+  return verify( DATA_SIZE, input_data_copy, verify_data );
 }

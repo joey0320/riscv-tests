@@ -36,6 +36,8 @@ void spmv(int r, const double* val, const int* idx, const double* x,
 //--------------------------------------------------------------------------
 // Main
 
+#include <inttypes.h>
+
 int main( int argc, char* argv[] )
 {
   double y[R];
@@ -44,9 +46,17 @@ int main( int argc, char* argv[] )
   spmv(R, val, idx, x, ptr, y);
 #endif
 
+  uint64_t start_cycle, end_cycle;
+  start_cycle = rdcycle();
+
   setStats(1);
-  spmv(R, val, idx, x, ptr, y);
+  for (int i = 0; i < 125; i++) {
+    spmv(R, val, idx, x, ptr, y);
+  }
   setStats(0);
+
+  end_cycle = rdcycle();
+  printf("TOTAL_CYCLES: %" PRIu64 " start_cycle: %" PRIu64 " end_cycle: %" PRIu64 "\n", end_cycle - start_cycle, start_cycle, end_cycle);
 
   return verifyDouble(R, y, verify_data);
 }

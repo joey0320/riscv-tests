@@ -196,37 +196,46 @@ int towers_verify( struct Towers* this )
 //--------------------------------------------------------------------------
 // Main
 
+#include <inttypes.h>
+
 int main( int argc, char* argv[] )
 {
   struct Towers towers;
   int i;
 
-  // Initialize free list
+  uint64_t start_cycle, end_cycle;
+  start_cycle = rdcycle();
+  for (int round = 0; round < 500; round++) {
 
-  list_init( &g_nodeFreeList );
-  g_nodeFreeList.head = &(g_nodePool[0]);
-  g_nodeFreeList.size = NUM_DISCS;
-  g_nodePool[NUM_DISCS-1].next = 0;
-  g_nodePool[NUM_DISCS-1].val = 99;
-  for ( i = 0; i < (NUM_DISCS-1); i++ ) {
-    g_nodePool[i].next = &(g_nodePool[i+1]);
-    g_nodePool[i].val = i;
-  }
+    // Initialize free list
 
-  towers_init( &towers, NUM_DISCS );
+    list_init( &g_nodeFreeList );
+    g_nodeFreeList.head = &(g_nodePool[0]);
+    g_nodeFreeList.size = NUM_DISCS;
+    g_nodePool[NUM_DISCS-1].next = 0;
+    g_nodePool[NUM_DISCS-1].val = 99;
+    for ( i = 0; i < (NUM_DISCS-1); i++ ) {
+      g_nodePool[i].next = &(g_nodePool[i+1]);
+      g_nodePool[i].val = i;
+    }
 
-  // If needed we preallocate everything in the caches
+    towers_init( &towers, NUM_DISCS );
+
+    // If needed we preallocate everything in the caches
 
 #if PREALLOCATE
-  towers_solve( &towers );
+    towers_solve( &towers );
 #endif
 
-  // Solve it
+    // Solve it
 
-  towers_clear( &towers );
-  setStats(1);
-  towers_solve( &towers );
-  setStats(0);
+    towers_clear( &towers );
+    setStats(1);
+    towers_solve( &towers );
+    setStats(0);
+  }
+  end_cycle = rdcycle();
+  printf("TOTAL_CYCLES: %" PRIu64 " start_cycle: %" PRIu64 " end_cycle: %" PRIu64 "\n", end_cycle - start_cycle, start_cycle, end_cycle);
 
   // Check the results
   return towers_verify( &towers );

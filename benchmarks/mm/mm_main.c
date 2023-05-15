@@ -4,9 +4,12 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include "util.h"
 
 #pragma GCC optimize ("unroll-loops")
+
+#define NUM_REPEAT 20
 
 void thread_entry(int cid, int nc)
 {
@@ -30,26 +33,33 @@ void thread_entry(int cid, int nc)
       b[i*n+j] = (t)(s = lfsr(s));
   memset(c, 0, m*n*sizeof(c[0]));
 
-  size_t instret, cycles;
-  for (int i = 0; i < R; i++)
-  {
-    instret = -read_csr(minstret);
-    cycles = -read_csr(mcycle);
-    mm(m, n, p, a, p, b, n, c, n);
-    instret += read_csr(minstret);
-    cycles += read_csr(mcycle);
+
+  uint64_t start_cycle, end_cycle;
+  start_cycle = rdcycle();
+  for (int round = 0; round < NUM_REPEAT; round++) {
+    size_t instret, cycles;
+    for (int i = 0; i < R; i++)
+    {
+      instret = -read_csr(minstret);
+      cycles = -read_csr(mcycle);
+      mm(m, n, p, a, p, b, n, c, n);
+      instret += read_csr(minstret);
+      cycles += read_csr(mcycle);
+    }
+
+    asm volatile("fence");
+/* printf("C%d: reg block %dx%dx%d, cache block %dx%dx%d\n", */
+/* cid, RBM, RBN, RBK, CBM, CBN, CBK); */
+/* printf("C%d: %d instructions\n", cid, (int)(instret)); */
+/* printf("C%d: %d cycles\n", cid, (int)(cycles)); */
+/* printf("C%d: %d flops\n", cid, 2*m*n*p); */
+/* printf("C%d: %d Mflops @ 1 GHz\n", cid, 2000*m*n*p/(cycles)); */
   }
+  end_cycle = rdcycle();
+  printf("TOTAL_CYCLES: %" PRIu64 " start_cycle: %" PRIu64 " end_cycle: %" PRIu64 "\n", end_cycle - start_cycle, start_cycle, end_cycle);
 
-  asm volatile("fence");
 
-  printf("C%d: reg block %dx%dx%d, cache block %dx%dx%d\n",
-         cid, RBM, RBN, RBK, CBM, CBN, CBK);
-  printf("C%d: %d instructions\n", cid, (int)(instret));
-  printf("C%d: %d cycles\n", cid, (int)(cycles));
-  printf("C%d: %d flops\n", cid, 2*m*n*p);
-  printf("C%d: %d Mflops @ 1 GHz\n", cid, 2000*m*n*p/(cycles));
-
-#if 1
+#if 0
   for (size_t i = 0; i < m; i++)
   {
     for (size_t j = 0; j < n; j++)

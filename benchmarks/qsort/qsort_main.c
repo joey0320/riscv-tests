@@ -134,6 +134,12 @@ void sort(size_t n, type arr[])
 //--------------------------------------------------------------------------
 // Main
 
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+type input_data_copy[DATA_SIZE];
+
 int main( int argc, char* argv[] )
 {
 #if PREALLOCATE
@@ -143,11 +149,24 @@ int main( int argc, char* argv[] )
     return 1;
 #endif
 
+
+/* type* input_data_copy = (type*)malloc(sizeof(type) * DATA_SIZE); */
+
+  uint64_t start_cycle, end_cycle;
+  start_cycle = rdcycle();
+
   // Do the sort
   setStats(1);
-  sort( DATA_SIZE, input_data );
+  for (int i = 0; i < 30; i++) {
+    // NOTE : technically, memcpy should be excluded from cycle count...
+    memcpy(input_data_copy, input_data, sizeof(type) * DATA_SIZE);
+    sort( DATA_SIZE, input_data_copy );
+  }
   setStats(0);
 
+  end_cycle = rdcycle();
+  printf("TOTAL_CYCLES: %" PRIu64 " start_cycle: %" PRIu64 " end_cycle: %" PRIu64 "\n", end_cycle - start_cycle, start_cycle, end_cycle);
+
   // Check the results
-  return verify( DATA_SIZE, input_data, verify_data );
+  return verify( DATA_SIZE, input_data_copy, verify_data );
 }

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include "util.h"
 
 volatile int trap_expected;
@@ -195,18 +196,27 @@ static void detect_granule()
   granule = 1UL << g;
 }
 
+
+#define NUM_REPEAT 4
 int main()
 {
-  detect_granule();
-  init_pt();
 
-  const int max_exhaustive = 32;
-  exhaustive_test(SCRATCH, max_exhaustive);
-  exhaustive_test(SCRATCH + RISCV_PGSIZE - max_exhaustive, max_exhaustive);
+  uint64_t start_cycle, end_cycle;
+  start_cycle = rdcycle();
+  for (int i = 0; i < NUM_REPEAT; i++) {
+    detect_granule();
+    init_pt();
 
-  test_range(SCRATCH, RISCV_PGSIZE);
-  test_range(SCRATCH, RISCV_PGSIZE / 2);
-  test_range(SCRATCH + RISCV_PGSIZE / 2, RISCV_PGSIZE / 2);
+    const int max_exhaustive = 32;
+    exhaustive_test(SCRATCH, max_exhaustive);
+    exhaustive_test(SCRATCH + RISCV_PGSIZE - max_exhaustive, max_exhaustive);
+
+    test_range(SCRATCH, RISCV_PGSIZE);
+    test_range(SCRATCH, RISCV_PGSIZE / 2);
+    test_range(SCRATCH + RISCV_PGSIZE / 2, RISCV_PGSIZE / 2);
+  }
+  end_cycle = rdcycle();
+  printf("TOTAL_CYCLES: %" PRIu64 " start_cycle: %" PRIu64 " end_cycle: %" PRIu64 "\n", end_cycle - start_cycle, start_cycle, end_cycle);
 
   return 0;
 }

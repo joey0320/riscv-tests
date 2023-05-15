@@ -16,6 +16,7 @@ void debug_printf(const char* str, ...);
 #include "util.h"
 
 #include <alloca.h>
+#include <inttypes.h>
 
 /* Global Variables: */
 
@@ -103,6 +104,9 @@ int main (int argc, char** argv)
   debug_printf("Using %s, HZ=%d\n", CLOCK_TYPE, HZ);
   debug_printf("\n");
 
+
+  uint64_t start_cycle, end_cycle;
+
   Done = false;
   while (!Done) {
     debug_printf("Trying %d runs through Dhrystone:\n", Number_Of_Runs);
@@ -113,6 +117,8 @@ int main (int argc, char** argv)
 
     setStats(1);
     Start_Timer();
+
+    start_cycle = rdcycle();
 
     for (Run_Index = 1; Run_Index <= Number_Of_Runs; ++Run_Index)
     {
@@ -164,6 +170,7 @@ int main (int argc, char** argv)
     /* Stop timer */
     /**************/
 
+    end_cycle = rdcycle();
     Stop_Timer();
     setStats(0);
 
@@ -234,6 +241,8 @@ int main (int argc, char** argv)
 
   printf("Microseconds for one run through Dhrystone: %ld\n", Microseconds);
   printf("Dhrystones per Second:                      %ld\n", Dhrystones_Per_Second);
+
+  printf("TOTAL_CYCLES: %" PRIu64 " start_cycle: %" PRIu64 " end_cycle: %" PRIu64 "\n", end_cycle - start_cycle, start_cycle, end_cycle);
 
   return 0;
 }
